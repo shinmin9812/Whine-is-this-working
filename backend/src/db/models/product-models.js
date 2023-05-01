@@ -1,7 +1,4 @@
-import { model } from "mongoose";
-import { ProductSchema } from "../schemas/product-schema.js";
-
-const Product = model("Product", ProductSchema);
+import { Product } from "../schemas/product-schema.js";
 
 export class ProductModel {
   async find() {
@@ -11,11 +8,11 @@ export class ProductModel {
 
   //와인 ID로 상세 정보 조회
   async findById(id) {
-    const product = await Product.find({ _id: id });
+    const product = await Product.findOne({ _id: id });
     return product;
   }
 
-  //와인 이름으로 상세 정보 조회
+  //와인 이름으로 상세 정보 조회 ===> 미사용 기능..?
   async findByName(search_name) {
     const product = await Product.findOne({ name: search_name });
     return product;
@@ -29,41 +26,64 @@ export class ProductModel {
 
   //와인 나라별로 조회
   async findByCountry(country) {
-    const products = await Product.findAll({ country: country });
+    const products = await Product.find({ country: country });
     return products;
   }
 
   //와인 가격별로 조회
-  async findByPrice(lowerPrice, HigherPrice) {
-    const products = await Product.findAll({
-      $and: [{ price: { $gte: lowerPrice } }, { price: { $lte: HigherPrice } }],
+  async findByPrice(lowerPrice, higherPrice) {
+    const products = await Product.find({
+      $and: [{ price: { $gte: lowerPrice } }, { price: { $lt: higherPrice } }],
     });
+    return products;
+  }
+
+  //Pick 와인 조회
+  async findByPicked() {
+    const products = await Product.find({ isPicked: true });
+    return products;
+  }
+
+  //Best 와인 조회
+  async findByBest() {
+    const products = await Product.find({ isBest: true });
     return products;
   }
 
   //와인 추가하기
   async createProduct(productInfo) {
-    const newProduct = await Product.create(productInfo);
-    return newProduct;
+    try {
+      const newProduct = await Product.create(productInfo);
+      return newProduct;
+    } catch (err) {
+      throw new Error("[상품 추가 실패] 상품 정보를 다시 확인해 주세요.");
+    }
   }
 
   //와인 정보 수정
-  async updateProduct(id, productInfo) {
-    const filter = { _id: id };
-    const option = { returnOriginal: false };
-
-    const updateProduct = await Product.findOneAndUpdate(
-      filter,
-      productInfo,
-      option
-    );
-    return updateProduct;
+  async updateProduct(id, productInfo, option) {
+    try {
+      const updateProduct = await Product.findOneAndUpdate(
+        id,
+        productInfo,
+        option
+      );
+      return updateProduct;
+    } catch (err) {
+      throw new Error("[상품 정보수정 실패] 입력 내용을 다시 확인해 주세요.");
+    }
   }
 
   //와인 삭제
   async deleteProduct(id) {
-    const deleteProduct = await Product.deleteOne({ _id: id });
-    return deleteProduct;
+    try {
+      const deleteProduct = await Product.deleteOne({ _id: id });
+      return deleteProduct;
+    } catch (err) {
+      throw new Error(
+        "[상품 삭제 실패] 해당 id를 가지는 상품이 존재하지 않습니다."
+      );
+    }
   }
 }
 
